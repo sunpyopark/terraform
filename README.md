@@ -9,5 +9,6 @@
 2. module_sg.tf
 모듈 코드를 이용한 security group(보안 그룹) 생성 코드
 
-Blog : https://teichae.tistory.com/
+Blog : https://teichae.tistory.com
+
 https://teichae.tistory.com/entry/Terraform을-이용한-Security-Group-만들기
