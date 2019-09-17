@@ -10,4 +10,4 @@
 모듈 코드를 이용한 security group(보안 그룹) 생성 코드
 
 Blog : https://teichae.tistory.com/
-https://teichae.tistory.com/entry/Terraform%EC%9D%84-%EC%9D%B4%EC%9A%A9%ED%95%9C-Security-Group-%EB%A7%8C%EB%93%A4%EA%B8%B0
+https://teichae.tistory.com/entry/Terraform을-이용한-Security-Group-만들기
