@@ -30,4 +30,12 @@ module "security-group" {
       cidr_blocks = "0.0.0.0/0"
     }
 ]
+egress_with_cidr_blocks = [
+    {
+      from_port   = 0                                #아웃바운드 시작 포트
+      to_port     = 0                                #아웃바운드 끝나는 포트
+      protocol    = "-1"                             #사용할 프로토콜
+      description = "all"                            #설명
+      cidr_blocks = "0.0.0.0/0"                      #허용할 IP 범위
+    }
 }
