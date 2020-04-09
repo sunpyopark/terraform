@@ -20,7 +20,7 @@ module "vpc" {
   create_database_internet_gateway_route  = true    #RDS용 라우팅 테이블에 인터넷 게이트웨이 연결 설정 여부
 
   enable_dns_hostnames = "true"  #DNS Hostname Enable
-  enable_dns_support    = "true"   #DNS Support Enable
+  enable_dns_support = "true"   #DNS Support Enable
 
   tags = { "TerraformManaged" = "true" }            #태그 설정
 }
