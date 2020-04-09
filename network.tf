@@ -1,84 +1,137 @@
-resource "aws_vpc" "vpc" {
-    cidr_block = "192.168.0.0/16"
-    enable_dns_hostnames = true
-    tags =  { Name = "vpc"}
+# VPC 구간
+resource "aws_vpc" "terra-vpc" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_hostnames = true
+  tags = {
+    Name = "terra-vpc"
+  }
 }
 
-resource "aws_internet_gateway" "igw" {
-    vpc_id = aws_vpc.vpc.id #어느 VPC와 연결할 것인지 지정
-    tags = { Name = "IGW"}  #태그 설정
+# Subnet 구간
+resource "aws_subnet" "terra-sub-public1" {
+  vpc_id                  = aws_vpc.terra-vpc.id
+  cidr_block              = "10.0.10.0/24"
+  availability_zone       = "ap-northeast-2a"
+  map_public_ip_on_launch = true
+  tags = {
+    Name = "terra-sub-public1"
+  }
 }
 
-# Subnet Public
-resource "aws_subnet" "public-a" {
-    vpc_id = aws_vpc.vpc.id #위에서 생성한 vpc 별칭 입력
-    cidr_block = "192.168.0.0/24" #IPv4 CIDER 블럭
-    availability_zone = "ap-northeast-2a" #가용영역 지정
-    map_public_ip_on_launch = true #퍼블릭 IP 자동 부여 설정
-    tags = { Name = "public-a"} #태그 설정
-
+resource "aws_subnet" "terra-sub-public2" {
+  vpc_id                  = aws_vpc.terra-vpc.id
+  cidr_block              = "10.0.20.0/24"
+  availability_zone       = "ap-northeast-2c"
+  map_public_ip_on_launch = true
+  tags = {
+    Name = "terra-sub-public2"
+  }
 }
 
-resource "aws_subnet" "public-c" {
-    vpc_id = aws_vpc.vpc.id
-    cidr_block  = "192.168.10.0/24"
-    availability_zone = "ap-northeast-2c"
-    map_public_ip_on_launch = true
-    tags = { Name = "public-c"}
+resource "aws_subnet" "terra-sub-private1" {
+  vpc_id            = aws_vpc.terra-vpc.id
+  cidr_block        = "10.0.11.0/24"
+  availability_zone = "ap-northeast-2a"
+  tags = {
+    Name = "terra-sub-private1"
+  }
 }
 
-# Subnet Private
-resource "aws_subnet" "private-a" {
-    vpc_id = aws_vpc.vpc.id #위에서 생성한 vpc 별칭 입력
-    cidr_block = "192.168.20.0/24" #IPv4 CIDER 블럭
-    availability_zone = "ap-northeast-2a" #가용영역 지정
-    map_public_ip_on_launch = false #외부에서 통신이 되면 안되기 때문에 퍼블릭 IP 부여를 하지 않습니다.
-    tags = { Name = "private-a"} #태그 설정
+resource "aws_subnet" "terra-sub-private2" {
+  vpc_id            = aws_vpc.terra-vpc.id
+  cidr_block        = "10.0.21.0/24"
+  availability_zone = "ap-northeast-2c"
+  tags = {
+    Name = "terra-sub-private2"
+  }
 }
 
-resource "aws_subnet" "private-c" {
-    vpc_id = aws_vpc.vpc.id
-    cidr_block  = "192.168.30.0/24"
-    availability_zone = "ap-northeast-2c"
-    tags = { Name = "private-c"}
+# 인터넷 게이트웨이 생성
+resource "aws_internet_gateway" "terra-igw" {
+  vpc_id = aws_vpc.terra-vpc.id
+  tags = {
+    Name = "terra-igw"
+  }
 }
 
-# public routing
-resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.vpc.id #VPC 별칭 입력
+resource "aws_eip" "nat" {
+  vpc      = true
+}
+
+# NAT 게이트웨이 생성
+resource "aws_nat_gateway" "nat" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.terra-sub-public1.id
+
+  tags = {
+    Name = "terra-NAT"
+  }
+}
+
+# 라우팅 테이블 생성
+resource "aws_route_table" "terra-public1" {
+  vpc_id = aws_vpc.terra-vpc.id
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.igw.id #Internet Gateway 별칭 입력
+    gateway_id = aws_internet_gateway.terra-igw.id
   }
-  tags = { Name = "public" } #태그 설정
+  tags = {
+    Name = "terra-public1"
+  }
 }
 
-resource "aws_route_table" "private-a" {
-  vpc_id = aws_vpc.vpc.id #VPC 별칭 입력
-  tags = { Name = "private-a" }
+resource "aws_route_table_association" "terra-routing-public1" {
+  subnet_id      = aws_subnet.terra-sub-public1.id
+  route_table_id = aws_route_table.terra-public1.id
 }
 
-resource "aws_route_table" "private-c" {
-  vpc_id = aws_vpc.vpc.id
-  tags = { Name = "private-c" }
+resource "aws_route_table" "terra-public2" {
+  vpc_id = aws_vpc.terra-vpc.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.terra-igw.id
+  }
+  tags = {
+    Name = "terra-public2"
+  }
 }
 
-resource "aws_route_table_association" "public-a" {
-  subnet_id      = aws_subnet.public-a.id #연결할 서브넷 별칭 입력
-  route_table_id = aws_route_table.public.id #서브넷과 연결할 라우팅 테이블 별칭 입력
+resource "aws_route_table_association" "terra-routing-public2" {
+  subnet_id      = aws_subnet.terra-sub-public2.id
+  route_table_id = aws_route_table.terra-public2.id
 }
 
-resource "aws_route_table_association" "public-c" {
-  subnet_id      = aws_subnet.public-c.id
-  route_table_id = aws_route_table.public.id
+
+# Private 라우팅 테이블 생성
+
+resource "aws_route_table" "terra-private1" {
+  vpc_id = aws_vpc.terra-vpc.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_nat_gateway.nat.id
+  }
+  tags = {
+    Name = "terra-private1"
+  }
 }
 
-resource "aws_route_table_association" "private-a" {
-  subnet_id      = aws_subnet.private-a.id
-  route_table_id = aws_route_table.private-a.id
+resource "aws_route_table_association" "terra-routing-private1" {
+  subnet_id      = aws_subnet.terra-sub-private1.id
+  route_table_id = aws_route_table.terra-private1.id
 }
 
-resource "aws_route_table_association" "private-c" {
-  subnet_id      = aws_subnet.private-c.id
-  route_table_id = aws_route_table.private-c.id
+resource "aws_route_table" "terra-private2" {
+  vpc_id = aws_vpc.terra-vpc.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_nat_gateway.nat.id
+  }
+  tags = {
+    Name = "terra-private2"
+  }
+}
+
+resource "aws_route_table_association" "terra-routing-private2" {
+  subnet_id      = aws_subnet.terra-sub-private2.id
+  route_table_id = aws_route_table.terra-private2.id
 }
