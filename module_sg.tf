@@ -38,4 +38,5 @@ egress_with_cidr_blocks = [
       description = "all"                            #설명
       cidr_blocks = "0.0.0.0/0"                      #허용할 IP 범위
     }
+ ]
 }
